@@ -29,9 +29,16 @@ class BookingController
 
     public function history()
     {
-
-        $headers = apache_request_headers();
-        $authHeader = $headers['Authorization'] ?? '';
+        $authHeader = null;
+        if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+            $authHeader = $_SERVER['HTTP_AUTHORIZATION'];
+        } elseif (function_exists('apache_request_headers')) {
+            $requestHeaders = apache_request_headers();
+            $requestHeaders = array_change_key_case($requestHeaders, CASE_LOWER);
+            if (isset($requestHeaders['authorization'])) {
+                $authHeader = $requestHeaders['authorization'];
+            }
+        }
         $token = str_replace('Bearer ', '', $authHeader);
 
         $decoded = base64_decode($token);
@@ -39,6 +46,8 @@ class BookingController
 
         $userIdFromToken = $parts[0] ?? null;
         $secretFromToken = $parts[1] ?? null;
+
+
 
         if ($secretFromToken !== "rahasia123") {
             http_response_code(401);

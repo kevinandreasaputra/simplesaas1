@@ -30,8 +30,19 @@ class Database
             $this->conn = new PDO($dsn, $this->username, $this->password);
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            echo "Connection error: " . $e->getMessage();
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            echo json_encode([
+                "status" => "error",
+                "message" => "Database Critical Error: " . $e->getMessage(),
+                "file" => $e->getFile(),
+                "line" => $e->getLine(),
+                "debug_env" => [
+                    "DB_HOST" => $_ENV['DB_HOST'] ?? 'NOT_SET',
+                    "Raw_Host" => $this->host
+                ]
+            ]);
+            exit;
         }
         return $this->conn;
     }
